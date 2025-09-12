@@ -8,4 +8,97 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Users {
+  id             Int        @id @default(autoincrement())
+  username       String
+  full_name      String
+  email          String     @unique
+  password       String
+  profile_photo  String?
+  bio            String?
+  created_at     DateTime   @default(now())
+  created_by     Int?
+  updated_at     DateTime   @updatedAt
+  updated_by     Int?
+
+  threads Threads[]        @relation("threads_created_by") 
+  threads_update Threads[] @relation("threads_updated_by")
+  replies Replies[]
+  likes Likes[]
+  following Following[]    @relation("following_as_follower")
+  followers Following[]    @relation("following_as_following")
+}
+
+model Threads {
+  id                Int        @id @default(autoincrement())
+  content           String
+  image             String?
+  number_of_replies Int        @default(0)
+  created_at        DateTime   @default(now())
+  created_by        Int?
+  updated_at        DateTime   @updatedAt
+  updated_by        Int?
+  
+  author Users?     @relation("threads_created_by", fields: [created_by], references: [id])
+  updater Users?    @relation("threads_updated_by", fields: [updated_by], references: [id])
+  replies Replies[]
+  likes Likes[]
+
+  @@index([created_by])
+  @@index([updated_by])
+}
+
+model Replies {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  thread_id  Int
+  image      String?
+  content    String
+  created_at DateTime @default(now())
+  created_by Int?
+  updated_at DateTime @updatedAt
+  updated_by Int?
+
+  user Users       @relation(fields: [user_id], references: [id])
+  thread Threads  @relation(fields: [thread_id], references: [id])
+
+  @@index([user_id])
+  @@index([thread_id])
+}
+
+model Likes {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  thread_id  Int
+  created_at DateTime @default(now())
+  created_by Int?
+  updated_at DateTime @updatedAt
+  updated_by Int?
+
+  user Users      @relation(fields: [user_id],references: [id])
+  thread Threads  @relation(fields: [thread_id], references: [id])
+
+  @@unique([user_id, thread_id])
+
+  @@index([user_id])
+  @@index([thread_id])
+}
+
+model Following {
+  id           Int      @id @default(autoincrement())
+  following_id Int
+  follower_id  Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  following_user Users @relation("following_as_following", fields: [following_id], references: [id])
+  follower_user Users @relation("following_as_follower", fields: [follower_id], references: [id])
+
+  @@unique([following_id, follower_id])
+
+  @@index([following_id])
+  @@index([follower_id])
+
+}
+
 
