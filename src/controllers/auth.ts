@@ -53,10 +53,24 @@ export const login = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { email, password } = req.body as { email: string; password: string };
-  const user = await prisma.user.findUnique({ where: { email } });
+  const { identifier, password } = req.body as {
+    identifier: string;
+    password: string;
+  };
+
+  const idNorm = identifier.trim();
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: { equals: idNorm.toLowerCase(), mode: "insensitive" } },
+        { username: { equals: idNorm, mode: "insensitive" } },
+      ],
+    },
+  });
+
   if (!user) {
-    throw new AppError(404, "Email is not registered");
+    throw new AppError(404, "Account is not registered");
   }
 
   const ok = comparePassword(password, user.password);
@@ -66,7 +80,7 @@ export const login = async (
 
   const token = signToken({ id: user.id, email: user.email });
 
-  res.status(201).json({
+  res.status(200).json({
     code: 201,
     status: "success",
     message: "Logged in succesfully!",
