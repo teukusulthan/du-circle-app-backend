@@ -73,7 +73,7 @@ export const login = async (
     throw new AppError(404, "Account is not registered");
   }
 
-  const ok = comparePassword(password, user.password);
+  const ok = await comparePassword(password, user.password);
   if (!ok) {
     throw new AppError(401, "Wrong Password");
   }
