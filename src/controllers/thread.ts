@@ -20,6 +20,7 @@ export const getThreads = async (req: Request, res: Response) => {
     threads: threads.map((t) => ({
       id: t.id,
       content: t.content,
+      image: t.image,
       user: {
         id: t.author?.id,
         username: t.author?.username,
