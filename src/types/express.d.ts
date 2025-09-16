@@ -1,10 +1,14 @@
 import "express";
-declare module "express-serve-static-core" {
-  interface Request {
-    validated?: {
-      body?: unknown;
-      query?: unknown;
-      params?: unknown;
-    };
+
+declare global {
+  namespace Express {
+    interface UserPayload {
+      id: number;
+    }
+
+    // merge ke Request
+    interface Request {
+      user?: UserPayload;
+    }
   }
 }
