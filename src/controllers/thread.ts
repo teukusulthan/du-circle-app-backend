@@ -4,7 +4,7 @@ import { AppError } from "../utils/appError";
 
 export const getThreads = async (req: Request, res: Response) => {
   const limit = Number(req.query.limit) || 25;
-  const userId = req.user?.id; // dari middleware auth
+  const userId = req.user?.id;
 
   const threads = await prisma.thread.findMany({
     take: limit,
@@ -39,6 +39,47 @@ export const getThreads = async (req: Request, res: Response) => {
     status: "success",
     message: "Get Data Thread Successfully",
     data,
+  });
+};
+
+export const getThread = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const userId = req.user?.id;
+
+  const thread = await prisma.thread.findUnique({
+    where: { id },
+    include: {
+      author: true,
+      likes: { select: { user_id: true } },
+      replies: true,
+    },
+  });
+  if (!thread) {
+    throw new AppError(404, "Thread not found");
+  }
+
+  const data = {
+    thread: {
+      id: thread.id,
+      content: thread.content,
+      image: thread.image,
+      user: {
+        id: thread.author?.id,
+        username: thread.author?.username,
+        name: thread.author?.full_name,
+        profile_picture: thread.author?.profile_photo,
+      },
+      created_at: thread.created_at,
+      likes: thread.likes.length,
+      replies: thread.replies.length,
+      isLiked: userId ? thread.likes.some((l) => l.user_id === userId) : false,
+    },
+  };
+
+  res.status(200).json({
+    status: "success",
+    message: "Thread fetched succesfully",
+    data: data,
   });
 };
 
