@@ -16,6 +16,7 @@ export const getReplies = async (req: Request, res: Response) => {
   const result = replies.map((r) => ({
     id: r.id,
     content: r.content,
+    image: r.image,
     user: {
       id: r.user.id,
       username: r.user.username,
@@ -39,6 +40,9 @@ export const createReply = async (req: Request, res: Response) => {
 
   const content = req.body.content;
   const file = req.file;
+  const imageUrl = file
+    ? `${req.protocol}://${req.get("host")}/uploads/${file.filename}`
+    : null;
 
   if (!content || !content.trim())
     throw new AppError(400, "Content is required");
@@ -48,7 +52,7 @@ export const createReply = async (req: Request, res: Response) => {
       user_id: userId,
       thread_id: threadId,
       content: content.trim(),
-      image: file ? file.originalname : undefined,
+      image: imageUrl,
     },
   });
 
