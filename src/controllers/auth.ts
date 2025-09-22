@@ -94,3 +94,46 @@ export const login = async (
     },
   });
 };
+
+export const profile = async (req: Request, res: Response) => {
+  const auth = (req as any).user as { id: number } | undefined;
+  if (!auth?.id) {
+    throw new AppError(401, "Unauthorized");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: auth.id },
+    select: {
+      id: true,
+      username: true,
+      full_name: true,
+      profile_photo: true,
+      bio: true,
+    },
+  });
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  const [follower_count, following_count] = await Promise.all([
+    prisma.following.count({ where: { following_id: user.id } }),
+    prisma.following.count({ where: { follower_id: user.id } }),
+  ]);
+
+  res.status(200).json({
+    code: 200,
+    status: "success",
+    message: "Get profile successfully",
+    data: {
+      id: user.id,
+      username: user.username,
+      name: user.full_name,
+      avatar: user.profile_photo ?? null,
+      cover_photo: (user as any).cover_photo ?? null,
+      bio: user.bio ?? "",
+      follower_count,
+      following_count,
+    },
+  });
+};

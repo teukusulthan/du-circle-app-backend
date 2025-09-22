@@ -104,5 +104,3 @@ export const createReply = async (req: Request, res: Response) => {
     data: { reply: payload },
   });
 };
-
-export const likeReply = async () => {};
