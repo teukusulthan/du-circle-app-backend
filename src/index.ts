@@ -6,7 +6,7 @@ import { initWs } from "./ws";
 
 const server = http.createServer(app);
 const io = initWs(server);
-app.set("io", io); //
+app.set("io", io);
 
 const PORT = Number(process.env.PORT) || 3000;
 server.listen(PORT, () => {
