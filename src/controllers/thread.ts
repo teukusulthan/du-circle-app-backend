@@ -84,11 +84,11 @@ export const getThread = async (req: Request, res: Response) => {
 };
 
 export const createThread = async (req: Request, res: Response) => {
+  const io = req.app.get("io");
   const userId = req.user?.id;
   if (!userId) throw new AppError(401, "Unauthorized");
 
   const { content } = req.body as { content: string };
-
   const file = req.file;
   const imageUrl = file
     ? `${req.protocol}://${req.get("host")}/uploads/${file.filename}`
@@ -100,10 +100,35 @@ export const createThread = async (req: Request, res: Response) => {
       image: imageUrl,
       created_by: userId,
     },
+    include: {
+      author: true,
+      likes: { select: { user_id: true } },
+      replies: { select: { id: true } },
+    },
   });
 
+  const payload = {
+    id: thread.id,
+    content: thread.content,
+    image: thread.image,
+    user: {
+      id: thread.author?.id,
+      username: thread.author?.username,
+      name: thread.author?.full_name,
+      profile_picture: thread.author?.profile_photo,
+    },
+    created_at: thread.created_at.toISOString(),
+    likes: thread.likes.length,
+    reply: thread.replies.length,
+    isLiked: false,
+  };
+
+  io.to("timeline:global").emit("thread:created", payload);
+
   res.status(201).json({
-    message: "Thread created succesfully",
-    data: thread,
+    code: 201,
+    status: "success",
+    message: "Thread created successfully",
+    data: payload,
   });
 };
