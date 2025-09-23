@@ -4,6 +4,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import authRoute from "./routes/auth";
 import threadRoute from "./routes/thread";
 import { authenticate } from "./middlewares/auth";
+import followRoute from "./routes/follow";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use("/uploads", express.static("uploads"));
 
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1", authenticate, threadRoute);
+app.use("/api/v1", authenticate, followRoute);
 
 app.use(errorHandler);
 
