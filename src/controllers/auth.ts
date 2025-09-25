@@ -89,7 +89,9 @@ export const login = async (
       username: user.username,
       name: user.full_name,
       email: user.email,
+      bio: user.bio,
       avatar: user.profile_photo,
+      banner: user.banner_photo,
       token: token,
     },
   });
@@ -143,7 +145,11 @@ export const patchProfile = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id as number | undefined;
   if (!userId) throw new AppError(401, "Unauthorized");
 
-  const { name, username } = req.body as { name?: string; username?: string };
+  const { name, username, bio } = req.body as {
+    name?: string;
+    username?: string;
+    bio?: string;
+  };
   const files = req.files as { [k: string]: Express.Multer.File[] } | undefined;
 
   const data: Record<string, any> = {};
@@ -160,6 +166,8 @@ export const patchProfile = async (req: Request, res: Response) => {
     data.username = username;
   }
 
+  if (bio !== undefined) data.bio = bio;
+
   if (files?.profile_photo?.[0])
     data.profile_photo = `http://localhost:3000/uploads/${files.profile_photo[0].filename}`;
   if (files?.banner_photo?.[0])
@@ -175,9 +183,9 @@ export const patchProfile = async (req: Request, res: Response) => {
       username: true,
       full_name: true,
       email: true,
+      bio: true,
       profile_photo: true,
       banner_photo: true,
-      bio: true,
     },
   });
 
@@ -190,9 +198,9 @@ export const patchProfile = async (req: Request, res: Response) => {
       username: user.username,
       name: user.full_name,
       email: user.email,
+      bio: user.bio,
       avatar: user.profile_photo,
       banner_photo: user.banner_photo,
-      bio: user.bio ?? "",
     },
   });
 };

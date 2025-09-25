@@ -58,6 +58,7 @@ export const PatchProfileSchema = z.object({
       z.string().min(3, "Username min 3 chars").max(20, "Username max 30 chars")
     )
     .optional(),
+  bio: z.string().max(200).optional(),
 });
 
 export type PatchProfileInput = z.infer<typeof PatchProfileSchema>;
