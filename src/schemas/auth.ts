@@ -38,3 +38,26 @@ export const loginSchema = z
   .strict();
 
 export type LoginBody = z.infer<typeof loginSchema>;
+
+const emptyToUndef = (v: unknown) =>
+  typeof v === "string" ? (v.trim() === "" ? undefined : v.trim()) : v;
+
+export const PatchProfileSchema = z.object({
+  name: z
+    .preprocess(
+      emptyToUndef,
+      z
+        .string()
+        .min(3, "Full name cannot be empty")
+        .max(100, "Full name too long")
+    )
+    .optional(),
+  username: z
+    .preprocess(
+      emptyToUndef,
+      z.string().min(3, "Username min 3 chars").max(20, "Username max 30 chars")
+    )
+    .optional(),
+});
+
+export type PatchProfileInput = z.infer<typeof PatchProfileSchema>;

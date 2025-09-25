@@ -108,6 +108,7 @@ export const profile = async (req: Request, res: Response) => {
       username: true,
       full_name: true,
       profile_photo: true,
+      banner_photo: true,
       bio: true,
     },
   });
@@ -130,10 +131,68 @@ export const profile = async (req: Request, res: Response) => {
       username: user.username,
       name: user.full_name,
       avatar: user.profile_photo ?? null,
-      cover_photo: (user as any).cover_photo ?? null,
+      banner: user.banner_photo ?? null,
       bio: user.bio ?? "",
       follower_count,
       following_count,
+    },
+  });
+};
+
+export const patchProfile = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as number | undefined;
+  if (!userId) throw new AppError(401, "Unauthorized");
+
+  const { name, username } = req.body as { name?: string; username?: string };
+  const files = req.files as { [k: string]: Express.Multer.File[] } | undefined;
+
+  const data: Record<string, any> = {};
+  if (name) data.full_name = name;
+
+  if (username) {
+    const exists = await prisma.user.findFirst({
+      where: {
+        username: { equals: username, mode: "insensitive" },
+        NOT: { id: userId },
+      },
+    });
+    if (exists) throw new AppError(409, "Username is already taken");
+    data.username = username;
+  }
+
+  if (files?.profile_photo?.[0])
+    data.profile_photo = `http://localhost:3000/uploads/${files.profile_photo[0].filename}`;
+  if (files?.banner_photo?.[0])
+    data.banner_photo = `http://localhost:3000/uploads/${files.banner_photo[0].filename}`;
+
+  if (!Object.keys(data).length) throw new AppError(400, "No fields to update");
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: {
+      id: true,
+      username: true,
+      full_name: true,
+      email: true,
+      profile_photo: true,
+      banner_photo: true,
+      bio: true,
+    },
+  });
+
+  res.status(200).json({
+    code: 200,
+    status: "success",
+    message: "Profile updated successfully",
+    data: {
+      id: user.id,
+      username: user.username,
+      name: user.full_name,
+      email: user.email,
+      avatar: user.profile_photo,
+      banner_photo: user.banner_photo,
+      bio: user.bio ?? "",
     },
   });
 };
