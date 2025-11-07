@@ -204,3 +204,16 @@ export const patchProfile = async (req: Request, res: Response) => {
     },
   });
 };
+
+export const suggestUser = async (req: Request, res: Response) => {
+  const suggest = await prisma.$queryRaw`SELECT * FROM "User" 
+  ORDER BY RANDOM()
+  LIMIT 10;`;
+
+  res.status(200).json({
+    code: 200,
+    status: "success",
+    message: "User fetched succedfully",
+    data: suggest,
+  });
+};

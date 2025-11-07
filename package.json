@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "docs:lint": "npx swagger-cli validate ./src/swagger.yaml"
   },
   "keywords": [],
   "author": "",
@@ -15,18 +16,22 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "ioredis": "^5.8.0",
+    "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "prisma": "^6.16.1",
     "socket.io": "^4.8.1",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.1.8"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/js-yaml": "^4.0.9",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "express": "^5.1.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

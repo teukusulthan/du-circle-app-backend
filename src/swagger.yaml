@@ -1,0 +1,531 @@
+openapi: 3.0.0
+info:
+  title: circle-app
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ThreadId:
+      name: threadId
+      in: path
+      description: Numeric ID of the thread
+      required: true
+      schema: { type: integer }
+    TypeQuery:
+      name: type
+      in: query
+      description: Filter follow relation
+      required: false
+      schema:
+        type: string
+        enum: [following, followers]
+    KeywordQuery:
+      name: keyword
+      in: query
+      required: false
+      schema: { type: string }
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        status: { type: string, example: error }
+        code: { type: integer, example: 400 }
+        message: { type: string, example: Validation error }
+      required: [status, code, message]
+
+    AuthToken:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    UserPublic:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        username: { type: string, example: teukusulthan }
+        name: { type: string, example: Teuku Sulthan }
+        email: { type: string, example: john@example.com }
+        avatar:
+          {
+            type: string,
+            nullable: true,
+            example: https://cdn.example.com/avatars/1.jpg,
+          }
+        banner:
+          {
+            type: string,
+            nullable: true,
+            example: https://cdn.example.com/banners/1.jpg,
+          }
+        bio: { type: string, nullable: true, example: "A quick brown fox…" }
+        followers: { type: integer, example: 10 }
+        following: { type: integer, example: 5 }
+      required: [id, username, name]
+
+    Thread:
+      type: object
+      properties:
+        id: { type: integer, example: 12 }
+        content: { type: string, example: "Upgraded to Tailwind CSS v4…" }
+        image:
+          {
+            type: string,
+            nullable: true,
+            example: https://cdn.example.com/thread/img.jpg,
+          }
+        likes: { type: integer, example: 3 }
+        isLiked: { type: boolean, example: false }
+        created_at:
+          { type: string, format: date-time, example: 2025-09-25T12:34:56Z }
+        user:
+          $ref: "#/components/schemas/UserPublic"
+
+    Reply:
+      type: object
+      properties:
+        id: { type: integer, example: 101 }
+        content: { type: string, example: "Nice update! 🔥" }
+        image: { type: string, nullable: true }
+        likes: { type: integer, example: 0 }
+        isLiked: { type: boolean, example: false }
+        created_at: { type: string, format: date-time }
+        user:
+          $ref: "#/components/schemas/UserPublic"
+
+    RegisterRequest:
+      type: object
+      properties:
+        username: { type: string, example: john_doe }
+        name: { type: string, example: John Doe }
+        email: { type: string, format: email, example: john@example.com }
+        password: { type: string, format: password, example: securepassword }
+      required: [username, name, email, password]
+
+    LoginRequest:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: Username or email
+          example: john_doe
+        password: { type: string, format: password, example: securepassword }
+      required: [identifier, password]
+
+    UpdateMeForm:
+      type: object
+      properties:
+        name: { type: string }
+        username: { type: string, example: teukusulthan }
+        profile_photo:
+          type: string
+          format: binary
+        banner_photo:
+          type: string
+          format: binary
+        bio:
+          type: string
+          example: "A quick brown fox jumps over the lazy dog"
+
+    CreateThreadForm:
+      type: object
+      properties:
+        content:
+          type: string
+          example: |
+            Upgraded to Tailwind CSS v4.
+            Container queries finally make responsive design painless.
+        image:
+          type: string
+          format: binary
+
+    CreateReplyForm:
+      type: object
+      properties:
+        content:
+          type: string
+          example: "Great point—totally agree!"
+
+    FollowRequest:
+      type: object
+      properties:
+        followed_user_id: { type: integer, example: 9 }
+      required: [followed_user_id]
+
+    ThreadsResponse:
+      type: object
+      properties:
+        status: { type: string, example: success }
+        message: { type: string, example: Get Data Threads Successfully }
+        data:
+          type: object
+          properties:
+            threads:
+              type: array
+              items:
+                $ref: "#/components/schemas/Thread"
+
+    ThreadResponse:
+      type: object
+      properties:
+        status: { type: string, example: success }
+        message: { type: string, example: Get Data Thread Successfully }
+        data:
+          type: object
+          properties:
+            thread:
+              $ref: "#/components/schemas/Thread"
+
+    RepliesResponse:
+      type: object
+      properties:
+        status: { type: string, example: success }
+        message: { type: string, example: Get Data Replies Successfully }
+        data:
+          type: object
+          properties:
+            replies:
+              type: array
+              items:
+                $ref: "#/components/schemas/Reply"
+
+    UsersResponse:
+      type: object
+      properties:
+        status: { type: string, example: success }
+        message: { type: string, example: OK }
+        data:
+          type: object
+          properties:
+            users:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserPublic"
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid bearer token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Threads
+  - name: Follows
+  - name: Search
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register
+      security: [] # no auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiMessage"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: "#/components/schemas/UserPublic" }
+                          token:
+                            {
+                              $ref: "#/components/schemas/AuthToken/properties/token",
+                            }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      security: [] # no auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiMessage"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/AuthToken"
+        "401":
+          description: Wrong credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/v1/auth/me:
+    get:
+      tags: [Profile]
+      summary: Get profile (me)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiMessage"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: "#/components/schemas/UserPublic" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    patch:
+      tags: [Profile]
+      summary: Update profile (me)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/UpdateMeForm" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiMessage"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: "#/components/schemas/UserPublic" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /api/v1/threads:
+    get:
+      tags: [Threads]
+      summary: Get threads
+      parameters:
+        - $ref: "#/components/parameters/LimitQuery"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ThreadsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    post:
+      tags: [Threads]
+      summary: Create thread
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/CreateThreadForm" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ThreadResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /api/v1/thread/{threadId}:
+    get:
+      tags: [Threads]
+      summary: Get thread by id
+      parameters:
+        - $ref: "#/components/parameters/ThreadId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ThreadResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/thread/{threadId}/like:
+    post:
+      tags: [Threads]
+      summary: Like/Unlike thread
+      description: Toggle like on a thread; response reflects current state.
+      parameters:
+        - $ref: "#/components/parameters/ThreadId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiMessage"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          liked: { type: boolean, example: true }
+                          likes: { type: integer, example: 4 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/thread/{threadId}/replies:
+    get:
+      tags: [Threads]
+      summary: Get replies of a thread
+      parameters:
+        - $ref: "#/components/parameters/ThreadId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RepliesResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    post:
+      tags: [Threads]
+      summary: Create reply for a thread
+      parameters:
+        - $ref: "#/components/parameters/ThreadId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/CreateReplyForm" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiMessage"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reply: { $ref: "#/components/schemas/Reply" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/follows:
+    get:
+      tags: [Follows]
+      summary: Get followers/following
+      parameters:
+        - $ref: "#/components/parameters/TypeQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsersResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/v1/follow:
+    post:
+      tags: [Follows]
+      summary: Follow a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FollowRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiMessage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Follows]
+      summary: Unfollow a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FollowRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiMessage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /api/v1/search:
+    get:
+      tags: [Search]
+      summary: Search users
+      parameters:
+        - $ref: "#/components/parameters/KeywordQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsersResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }

@@ -8,12 +8,14 @@ import {
 } from "../schemas/auth";
 import { authenticate } from "../middlewares/auth";
 import { upload } from "../middlewares/multer";
+import { suggestUser } from "../controllers/auth";
 
 const router = Router();
 
 router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
 router.get("/me", authenticate, profile);
+router.get("/suggestion", authenticate, suggestUser);
 router.patch(
   "/me",
   authenticate,
