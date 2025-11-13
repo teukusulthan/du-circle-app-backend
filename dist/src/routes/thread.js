@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const thread_1 = require("../controllers/thread");
+const like_1 = require("../controllers/like");
+const multer_1 = require("../middlewares/multer");
+const reply_1 = require("../controllers/reply");
+const cache_1 = require("../middlewares/cache");
+const router = (0, express_1.Router)();
+router.get("/threads", (0, cache_1.cacheGET)(15), thread_1.getThreads);
+router.get("/thread/:id", (0, cache_1.cacheGET)(30), thread_1.getThread);
+router.get("/thread/:id/replies", (0, cache_1.cacheGET)(30), reply_1.getReplies);
+router.post("/threads", multer_1.upload.single("image"), thread_1.createThread);
+router.post("/thread/:id/like", like_1.likeThread);
+router.post("/thread/:id/replies", multer_1.upload.single("image"), reply_1.createReply);
+exports.default = router;
